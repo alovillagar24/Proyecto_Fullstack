@@ -10,6 +10,11 @@ app.use(express.json());
 app.use(cors());
 app.use(express.static('public')); // Sirve automáticamente los archivos estáticos del frontend
 
+// NUEVA RUTA: Redirige la raíz al login automáticamente
+app.get('/', (req, res) => {
+    res.redirect('/login.html');
+});
+
 // Conexión a MongoDB
 mongoose.connect(process.env.MONGODB_URI)
   .then(() => console.log('✅ Conectado exitosamente a MongoDB'))
