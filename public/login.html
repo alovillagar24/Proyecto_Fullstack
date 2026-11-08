@@ -61,6 +61,7 @@
             msgEl.textContent = '';
 
             try {
+                // Cambiado a ruta relativa para que funcione en Render
                 const res = await fetch('/api/auth/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
