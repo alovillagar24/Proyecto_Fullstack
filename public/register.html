@@ -48,7 +48,8 @@
             const msgEl = document.getElementById('msg');
 
             try {
-                const res = await fetch('http://localhost:3000/api/auth/register', {
+                // Cambiado a ruta relativa para que funcione en Render
+                const res = await fetch('/api/auth/register', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ username, password })
