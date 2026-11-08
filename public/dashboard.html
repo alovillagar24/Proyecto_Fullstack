@@ -71,7 +71,8 @@
         // Función para obtener y listar los elementos del usuario autenticado
         const fetchItems = async () => {
             try {
-                const res = await fetch('http://localhost:3000/api/items', {
+                // Ruta relativa para producción y desarrollo
+                const res = await fetch('/api/items', {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 
@@ -117,7 +118,8 @@
             const description = document.getElementById('description').value;
 
             try {
-                const res = await fetch('http://localhost:3000/api/items', {
+                // Ruta relativa para producción y desarrollo
+                const res = await fetch('/api/items', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -144,7 +146,8 @@
             if (!confirm('¿Estás seguro de eliminar este elemento?')) return;
             
             try {
-                const res = await fetch(`http://localhost:3000/api/items/${id}`, {
+                // Ruta relativa para producción y desarrollo
+                const res = await fetch(`/api/items/${id}`, {
                     method: 'DELETE',
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
