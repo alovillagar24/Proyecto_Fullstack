@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Principal - Gestión</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .container { max-width: 800px; margin: 0 auto; padding: 2rem; }
+        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+        ul { list-style: none; padding: 0; }
+        ul li { 
+            background: #fff; 
+            padding: 1rem; 
+            margin-bottom: 0.75rem; 
+            border-radius: 6px; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05); 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+        }
+        .card { 
+            background: white; 
+            padding: 2rem; 
+            border-radius: 8px; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1); 
+            margin-bottom: 1.5rem; 
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Gestión de Elementos</h1>
+            <button class="btn-danger" onclick="logout()">Cerrar Sesión</button>
+        </header>
+
+        <div class="card">
+            <h3>Agregar Nuevo Elemento</h3>
+            <form id="item-form">
+                <div style="margin-bottom: 1rem;">
+                    <input type="text" id="title" placeholder="Título" required style="width: 100%; padding: 0.5rem; box-sizing: border-box;">
+                </div>
+                <div style="margin-bottom: 1rem;">
+                    <textarea id="description" placeholder="Descripción" rows="3" style="width: 100%; padding: 0.5rem; box-sizing: border-box;"></textarea>
+                </div>
+                <button type="submit" class="btn-primary">Guardar Elemento</button>
+            </form>
+        </div>
+
+        <div class="card">
+            <h3>Lista de Elementos</h3>
+            <ul id="items-list">
+                <!-- Se llena dinámicamente -->
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // Verificación inicial de autenticación
+        const token = localStorage.getItem('token');
+        if (!token) {
+            window.location.href = 'login.html';
+        }
+
+        function logout() {
+            localStorage.removeItem('token');
+            window.location.href = 'login.html';
+        }
+
+        // Función para obtener y listar los elementos del usuario autenticado
+        const fetchItems = async () => {
+            try {
+                const res = await fetch('http://localhost:3000/api/items', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (res.status === 401 || res.status === 403) {
+                    logout(); // Token expirado o inválido
+                    return;
+                }
+
+                if (!res.ok) {
+                    console.error('Error al obtener los elementos del servidor');
+                    return;
+                }
+
+                const items = await res.json();
+                const listEl = document.getElementById('items-list');
+                listEl.innerHTML = '';
+                
+                if (!items || items.length === 0) {
+                    listEl.innerHTML = '<p style="color: #6b7280; text-align: center; padding: 1rem;">No tienes elementos guardados aún.</p>';
+                    return;
+                }
+
+                items.forEach(item => {
+                    const li = document.createElement('li');
+                    li.innerHTML = `
+                        <div>
+                            <strong>${item.title}</strong>
+                            <p style="margin: 0.2rem 0 0 0; color: #6b7280; font-size: 0.9rem;">${item.description || ''}</p>
+                        </div>
+                        <button class="btn-danger" onclick="deleteItem('${item._id}')" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;">Eliminar</button>
+                    `;
+                    listEl.appendChild(li);
+                });
+            } catch (err) {
+                console.error('Error de red al cargar elementos', err);
+            }
+        };
+
+        // Evento para crear un nuevo elemento asociado al usuario
+        document.getElementById('item-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const title = document.getElementById('title').value;
+            const description = document.getElementById('description').value;
+
+            try {
+                const res = await fetch('http://localhost:3000/api/items', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ title, description })
+                });
+
+                if (res.ok) {
+                    document.getElementById('title').value = '';
+                    document.getElementById('description').value = '';
+                    fetchItems();
+                } else {
+                    const data = await res.json();
+                    alert(data.error || data.message || 'No autorizado o error al crear el elemento');
+                }
+            } catch (err) {
+                alert('No se pudo conectar con el servidor.');
+            }
+        });
+
+        // Función para eliminar un elemento propio
+        async function deleteItem(id) {
+            if (!confirm('¿Estás seguro de eliminar este elemento?')) return;
+            
+            try {
+                const res = await fetch(`http://localhost:3000/api/items/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (res.ok) {
+                    fetchItems();
+                } else {
+                    alert('Error al eliminar el elemento o no autorizado');
+                }
+            } catch (err) {
+                alert('No se pudo conectar con el servidor.');
+            }
+        }
+
+        // Cargar los elementos al iniciar la página
+        fetchItems();
+    </script>
+</body>
+</html>
